@@ -26,15 +26,12 @@ import           Network.HTTP.Client.TLS               (tlsManagerSettings)
 sendEmail
    :: HailgunContext -- ^ The Mailgun context to operate in.
    -> HailgunMessage -- ^ The Hailgun message to be sent.
+   -> Maybe NC.Manager
    -> IO (Either HailgunErrorResponse HailgunSendResponse) -- ^ The result of the sent email. Either a sent email or a successful send.
-sendEmail context message = do
+sendEmail context message mManager = do
    request <- postRequest url context (toEmailParts message)
-#if MIN_VERSION_http_client(0,5,0)
-   mgr <- NC.newManager tlsManagerSettings
+   mgr <- maybe (NC.newManager tlsManagerSettings) pure mManager
    response <- NC.httpLbs request mgr
-#else
-   response <- NC.withManager tlsManagerSettings (NC.httpLbs request)
-#endif
    return $ parseResponse response
    where
       url = mailgunApiPrefixContext context ++ "/messages"
