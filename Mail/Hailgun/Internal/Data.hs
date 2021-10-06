@@ -23,6 +23,7 @@ import           Data.Aeson
 import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text            as T
+import qualified Data.Map             as M
 import           Data.Time.Clock      (UTCTime (..))
 #if MIN_VERSION_time(1,6,0)
 import           Data.Time.Format     (ParseTime (..), parseTimeM)
@@ -94,6 +95,7 @@ data HailgunMessage = HailgunMessage
    , messageCC          :: [VerifiedEmailAddress]
    , messageBCC         :: [VerifiedEmailAddress]
    , messageAttachments :: [SpecificAttachment]
+   , messageVariables   :: M.Map VerifiedEmailAddress Value
    }
    deriving (Show)
    -- TODO o:tag support
