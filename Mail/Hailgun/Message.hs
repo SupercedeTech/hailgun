@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Mail.Hailgun.Message
     ( hailgunMessage
     ) where
@@ -5,6 +7,8 @@ module Mail.Hailgun.Message
 import           Control.Applicative
 import qualified Data.ByteString.Char8              as BC
 import qualified Data.Text                          as T
+import qualified Data.Map                           as M
+import           Data.Aeson                         (Value)
 import           Data.Text.Encoding                 (encodeUtf8, decodeUtf8)
 import           Data.List                          (find)
 import           Mail.Hailgun.Attachment.Internal
@@ -22,13 +26,16 @@ hailgunMessage
    -> UnverifiedEmailAddress -- ^ The email account that the recipients should respond to in order to get back to us.
    -> MessageRecipients -- ^ The people that should recieve this email.
    -> [Attachment] -- ^ The attachments that you want to attach to the email; standard or inline.
+   -> Maybe (M.Map UnverifiedEmailAddress Value) -- ^ Recipient variables used inside of email for batch sending
    -> Either HailgunErrorMessage HailgunMessage -- ^ Either an error while trying to create a valid message or a valid message.
-hailgunMessage subject content sender recipients simpleAttachments = do
+hailgunMessage subject content sender recipients simpleAttachments mVariables = do
    from  <- validateRecipient sender
    to    <- mapM validateRecipient (recipientsTo recipients)
    cc    <- mapM validateRecipient (recipientsCC recipients)
    bcc   <- mapM validateRecipient (recipientsBCC recipients)
    attachments <- attachmentsInferredFromMessage content cleanAttachments
+   verifiedVariables <- fmap M.fromList $ mapM (\(email, vars) -> (,vars) <$> validateRecipient email)
+       $ maybe mempty M.toList mVariables
    return HailgunMessage
       { messageSubject = subject
       , messageContent = content
@@ -37,6 +44,7 @@ hailgunMessage subject content sender recipients simpleAttachments = do
       , messageCC = cc
       , messageBCC = bcc
       , messageAttachments = attachments
+      , messageVariables = verifiedVariables
       }
    where
       cleanAttachments = fmap cleanAttachmentFilePath simpleAttachments

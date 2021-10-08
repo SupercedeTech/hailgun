@@ -8,10 +8,13 @@ module Mail.Hailgun.SendEmail
 import           Control.Applicative
 #endif
 import           Control.Monad                         (mzero)
+import           Control.Arrow                         (first)
 import           Data.Aeson
 import qualified Data.ByteString.Char8                 as BC
+import qualified Data.ByteString.Lazy                  as BL
 import qualified Data.Text                             as T
 import qualified Data.Text.Encoding                    as T
+import qualified Data.Map                              as M
 import           Mail.Hailgun.Communication
 import           Mail.Hailgun.Errors
 import           Mail.Hailgun.Internal.Data
@@ -50,10 +53,17 @@ toSimpleEmailParts message =
    ++ cc
    ++ bcc
    ++ fromContent (messageContent message)
+   ++ ( if not $ M.null $ messageVariables message
+        then [ recipientVariables $ messageVariables message ] else [] )
    where
       to = convertEmails (BC.pack "to") . messageTo $ message
       cc = convertEmails (BC.pack "cc") . messageCC $ message
       bcc = convertEmails (BC.pack "bcc") . messageBCC $ message
+      
+      recipientVariables :: M.Map VerifiedEmailAddress Value -> (BC.ByteString, BC.ByteString)
+      recipientVariables vars =
+        let payload = object $ map (first T.decodeUtf8) $ M.toList vars
+        in ( BC.pack "recipient-variables", BL.toStrict $ encode payload )
 
       fromContent :: MessageContent -> [(BC.ByteString, BC.ByteString)]
       fromContent t@(TextOnly _) = [ (BC.pack "text", textContent t) ]
