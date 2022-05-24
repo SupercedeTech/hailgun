@@ -1,3 +1,6 @@
+## 0.5.2
+- Add aeson 2 support, set lower bound to aeson 2
+
 ## 0.5.1
 
 - Minor cleanups (see commit 1bb4746eaf3fbc100b9003da771eb4198a8a198a)

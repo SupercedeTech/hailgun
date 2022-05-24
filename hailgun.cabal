@@ -10,7 +10,7 @@ name:                hailgun
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             0.5.1
+version:             0.5.2
 
 -- A short (one-line) description of the package.
 synopsis:            Mailgun REST api interface for Haskell.
@@ -73,7 +73,7 @@ library
                         , Mail.Hailgun.SendEmail
 
    build-depends:         base               >= 4.6 && < 5
-                        , aeson              >= 0.8
+                        , aeson              >= 2.0.0.0
                         , bytestring         >= 0.10.4 && <= 0.11
                         , email-validate     >= 2.0 && < 2.4
                         , exceptions         >= 0.8
