@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Mail.Hailgun.SendEmail
     ( sendEmail
     , HailgunSendResponse(..)
@@ -23,6 +25,7 @@ import           Mail.Hailgun.PartUtil
 import qualified Network.HTTP.Client                   as NC
 import qualified Network.HTTP.Client.MultipartFormData as NCM
 import           Network.HTTP.Client.TLS               (tlsManagerSettings)
+import qualified Data.Aeson.Key as Key
 
 -- | Send an email using the Mailgun API's. This method is capable of sending a message over the
 -- Mailgun service. All it needs is the appropriate context.
@@ -62,7 +65,7 @@ toSimpleEmailParts message =
       
       recipientVariables :: M.Map VerifiedEmailAddress Value -> (BC.ByteString, BC.ByteString)
       recipientVariables vars =
-        let payload = object $ map (first T.decodeUtf8) $ M.toList vars
+        let payload = object $ map (first (Key.fromText . T.decodeUtf8)) $ M.toList vars
         in ( BC.pack "recipient-variables", BL.toStrict $ encode payload )
 
       fromContent :: MessageContent -> [(BC.ByteString, BC.ByteString)]
@@ -82,7 +85,7 @@ data HailgunSendResponse = HailgunSendResponse
 
 instance FromJSON HailgunSendResponse where
    parseJSON (Object v) = HailgunSendResponse
-      <$> v .: T.pack "message"
-      <*> v .: T.pack "id"
+      <$> v .:  "message"
+      <*> v .:  "id"
    parseJSON _ = mzero
 
